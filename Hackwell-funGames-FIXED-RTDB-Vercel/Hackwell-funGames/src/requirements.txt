@@ -1,0 +1,7 @@
+Flask
+flask-bcrypt
+pymongo
+datetime
+functools
+qrcode
+reportlab

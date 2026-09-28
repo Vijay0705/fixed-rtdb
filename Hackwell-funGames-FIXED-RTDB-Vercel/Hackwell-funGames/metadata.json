@@ -1,0 +1,6 @@
+{
+  "name": "Gaming Arena — College Event Leaderboard",
+  "description": "Official college gaming arena leaderboard and event management portal for tracking game results, player XP, and live rankings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

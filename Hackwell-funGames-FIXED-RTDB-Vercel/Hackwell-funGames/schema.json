@@ -1,0 +1,500 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GamingArenaCollegeLeaderboardSchema",
+  "description": "Comprehensive Project & Data Schema Specification for Gaming Arena — College Event Leaderboard application",
+  "projectInfo": {
+    "name": "Gaming Arena — College Event Leaderboard",
+    "packageName": "react-example",
+    "version": "0.0.0",
+    "description": "Official college gaming arena leaderboard and event management portal for tracking game results, player XP, and live rankings.",
+    "techStack": {
+      "frontend": [
+        "React 19",
+        "TypeScript",
+        "Vite",
+        "Tailwind CSS v4",
+        "Motion (Framer)",
+        "Lucide React"
+      ],
+      "backend": [
+        "Node.js",
+        "Express",
+        "TypeScript (tsx execution)",
+        "Mongoose (MongoDB)"
+      ],
+      "persistence": [
+        "Cloud Firestore (hackwell-fungames)"
+      ]
+    }
+  },
+  "type": "object",
+  "definitions": {
+    "User": {
+      "type": "object",
+      "description": "Student participant or Admin user profile",
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "gamerTag",
+        "role",
+        "xp",
+        "rankTier",
+        "gamesPlayed",
+        "wins",
+        "losses",
+        "joinedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user identifier (e.g., usr_admin_vijay, usr_st_...)"
+        },
+        "googleId": {
+          "type": "string",
+          "description": "Google OAuth subscriber identifier"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address"
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "Scrypt salted password hash (format: salt:hash)"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full display name of the player"
+        },
+        "gamerTag": {
+          "type": "string",
+          "description": "Unique username / in-game tag"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri",
+          "description": "Avatar image URL or SVG generator link"
+        },
+        "department": {
+          "type": "string",
+          "enum": ["CSE", "AIDS", "AIML", "IT", "CSBS", "Esports Commission"],
+          "description": "Academic department or commission"
+        },
+        "teamName": {
+          "type": "string",
+          "description": "Registered team name"
+        },
+        "studentId": {
+          "type": "string",
+          "description": "College Roll / Registration ID or Team Code"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["student", "participant", "admin", "ADMIN"],
+          "description": "User access role"
+        },
+        "xp": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Cumulative Experience Points earned"
+        },
+        "rankTier": {
+          "$ref": "#/definitions/RankTier"
+        },
+        "gamesPlayed": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Total number of tournament games played"
+        },
+        "wins": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Total victory count"
+        },
+        "losses": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Total loss count"
+        },
+        "joinedAt": {
+          "type": "string",
+          "description": "ISO date string of account creation (YYYY-MM-DD)"
+        }
+      }
+    },
+    "GameResult": {
+      "type": "object",
+      "description": "Recorded match or game outcome record",
+      "required": [
+        "id",
+        "userId",
+        "userGamerTag",
+        "userFullName",
+        "game",
+        "result",
+        "xpAwarded",
+        "isVoided",
+        "recordedByAdmin",
+        "createdAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique result record identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference ID of the user"
+        },
+        "userGamerTag": {
+          "type": "string",
+          "description": "Snapshot of gamerTag at match time"
+        },
+        "userFullName": {
+          "type": "string",
+          "description": "Snapshot of user full name at match time"
+        },
+        "game": {
+          "$ref": "#/definitions/EventGame"
+        },
+        "result": {
+          "$ref": "#/definitions/GameResultStatus"
+        },
+        "moviesWon": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of movies guessed (Specific to Dumb Charades)"
+        },
+        "xpAwarded": {
+          "type": "integer",
+          "description": "XP point reward calculated for this match"
+        },
+        "isVoided": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag indicating if result was cancelled/nullified by admin"
+        },
+        "voidReason": {
+          "type": "string",
+          "description": "Justification for voiding the game result"
+        },
+        "recordedByAdmin": {
+          "type": "string",
+          "description": "Email of admin who created the record"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of record entry"
+        }
+      }
+    },
+    "XpHistoryEntry": {
+      "type": "object",
+      "description": "Audit log for XP point updates and deductions",
+      "required": [
+        "id",
+        "userId",
+        "userGamerTag",
+        "game",
+        "result",
+        "amount",
+        "performedBy",
+        "createdAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique XP log entry identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User identifier receiving/losing XP"
+        },
+        "userGamerTag": {
+          "type": "string",
+          "description": "Snapshot gamer tag"
+        },
+        "game": {
+          "type": "string",
+          "description": "Associated game title"
+        },
+        "result": {
+          "type": "string",
+          "description": "Outcome or action summary string"
+        },
+        "amount": {
+          "type": "integer",
+          "description": "Delta XP amount awarded (+) or deducted (-)"
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Email of admin performing the update"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp"
+        }
+      }
+    },
+    "AuditLogEntry": {
+      "type": "object",
+      "description": "System administrative security and operational audit trail",
+      "required": [
+        "id",
+        "action",
+        "performedBy",
+        "details",
+        "createdAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique audit record ID"
+        },
+        "action": {
+          "$ref": "#/definitions/AuditAction"
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Admin email or actor identifier"
+        },
+        "details": {
+          "type": "string",
+          "description": "Descriptive summary of the action"
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "Client IP address"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp"
+        }
+      }
+    },
+    "Session": {
+      "type": "object",
+      "description": "Active session token store",
+      "required": ["token", "userId"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Bearer authorization session token"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Associated User ID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AdminResetToken": {
+      "type": "object",
+      "description": "Password reset token mapping",
+      "required": ["email", "expiresAt"],
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "integer",
+          "description": "Unix timestamp in milliseconds"
+        }
+      }
+    },
+    "RankTier": {
+      "type": "string",
+      "enum": [
+        "Spark",
+        "Blaze",
+        "Nova",
+        "Legend"
+      ],
+      "description": "Competitive tier ranks based on total player XP"
+    },
+    "UserRole": {
+      "type": "string",
+      "enum": ["student", "participant", "admin", "ADMIN"]
+    },
+    "EventGame": {
+      "type": "string",
+      "enum": [
+        "Chess",
+        "UNO",
+        "Drawasourous / Scribble.io",
+        "Among Us",
+        "Antakshiri",
+        "Dumb Charades",
+        "Guess the PIN"
+      ]
+    },
+    "GameResultStatus": {
+      "type": "string",
+      "enum": ["WIN", "LOSS", "CORRECT WITHIN TIME", "WRONG", "TIMEOUT"]
+    },
+    "AuditAction": {
+      "type": "string",
+      "enum": [
+        "ADMIN_LOGIN",
+        "XP_UPDATE",
+        "RESULT_CORRECTION",
+        "RESULT_VOID",
+        "GAME_STATUS_UPDATE",
+        "PASSWORD_RESET"
+      ]
+    }
+  },
+  "rankTierThresholds": [
+    { "tier": "Spark", "minXp": 0 },
+    { "tier": "Blaze", "minXp": 39 },
+    { "tier": "Nova", "minXp": 79 },
+    { "tier": "Legend", "minXp": 150 }
+  ],
+  "gameXpRules": [
+    { "game": "Chess", "winXp": 50, "lossXp": 0, "rule": "WIN: +50 XP" },
+    { "game": "UNO", "winXp": 25, "lossXp": 0, "rule": "WIN: +25 XP" },
+    { "game": "Drawasourous / Scribble.io", "winXp": 10, "lossXp": 0, "rule": "WIN: +10 XP" },
+    { "game": "Among Us", "winXp": 15, "lossXp": 0, "rule": "WIN: +15 XP" },
+    { "game": "Antakshiri", "winXp": 10, "lossXp": 0, "rule": "WIN: +10 XP" },
+    { "game": "Dumb Charades", "xpPerUnit": 5, "unit": "moviesWon", "rule": "+5 XP per movie guessed correctly" },
+    { "game": "Guess the PIN", "winXp": 10, "lossXp": 0, "rule": "CORRECT WITHIN TIME: +10 XP" }
+  ],
+  "apiEndpoints": [
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "access": "Public",
+      "description": "Server health status & current server time"
+    },
+    {
+      "path": "/api/auth/register",
+      "method": "POST",
+      "access": "Public",
+      "description": "Register new student participant",
+      "requestBody": {
+        "required": ["name", "username", "department", "teamName", "password", "confirmPassword"]
+      }
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "access": "Public",
+      "description": "Participant sign-in using username/email and password"
+    },
+    {
+      "path": "/api/auth/student-google",
+      "method": "POST",
+      "access": "Public",
+      "description": "Student login/registration via Google auth"
+    },
+    {
+      "path": "/api/auth/admin-login",
+      "method": "POST",
+      "access": "Public",
+      "description": "Admin authentication endpoint"
+    },
+    {
+      "path": "/api/admin/admin-login",
+      "method": "POST",
+      "access": "Public",
+      "description": "Alternative admin authentication endpoint"
+    },
+    {
+      "path": "/api/admin/forgot-password",
+      "method": "POST",
+      "access": "Public",
+      "description": "Request password reset token for admin"
+    },
+    {
+      "path": "/api/admin/reset-password",
+      "method": "POST",
+      "access": "Public",
+      "description": "Reset admin password using token"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "access": "Authenticated",
+      "description": "Retrieve current logged-in user profile"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "access": "Authenticated",
+      "description": "Destroy active session token"
+    },
+    {
+      "path": "/api/leaderboard",
+      "method": "GET",
+      "access": "Public",
+      "queryParameters": ["search"],
+      "description": "Fetch ordered student rankings by XP and wins"
+    },
+    {
+      "path": "/api/users",
+      "method": "GET",
+      "access": "Public",
+      "description": "List all registered student participants"
+    },
+    {
+      "path": "/api/users/:id",
+      "method": "GET",
+      "access": "Public",
+      "description": "Get student profile, game results, and XP history"
+    },
+    {
+      "path": "/api/admin/update-points",
+      "method": "POST",
+      "access": "Admin Only",
+      "description": "Log match result and award XP to student",
+      "requestBody": {
+        "required": ["userId", "game", "result"],
+        "optional": ["moviesWon"]
+      }
+    },
+    {
+      "path": "/api/admin/game-results",
+      "method": "GET",
+      "access": "Public/Admin",
+      "description": "Fetch all recorded game results"
+    },
+    {
+      "path": "/api/admin/void-result",
+      "method": "POST",
+      "access": "Admin Only",
+      "description": "Void a previously recorded match result and deduct awarded XP",
+      "requestBody": {
+        "required": ["resultId", "voidReason"]
+      }
+    },
+    {
+      "path": "/api/xp/history",
+      "method": "GET",
+      "access": "Public",
+      "description": "Fetch entire XP transaction history"
+    },
+    {
+      "path": "/api/admin/audit-logs",
+      "method": "GET",
+      "access": "Admin Only",
+      "description": "Fetch administrative action audit logs"
+    },
+    {
+      "path": "/api/admin/analytics",
+      "method": "GET",
+      "access": "Public/Admin",
+      "description": "Fetch leaderboard & tournament statistics"
+    }
+  ]
+}

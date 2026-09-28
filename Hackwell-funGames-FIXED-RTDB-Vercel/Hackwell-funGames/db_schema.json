@@ -1,0 +1,333 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DatabaseSchema",
+  "description": "Database Schema Specification for Gaming Arena — College Event Leaderboard (Cloud Firestore & Local Persistent Store)",
+  "type": "object",
+  "databaseEngine": {
+    "primary": "Cloud Firestore (hackwell-fungames)"
+  },
+  "firestoreSecurityRules": {
+    "users": {
+      "read": "true",
+      "create": "true",
+      "update": "true",
+      "delete": "false"
+    },
+    "gameResults": {
+      "read": "true",
+      "create": "true",
+      "update": "true",
+      "delete": "true"
+    },
+    "xpHistory": {
+      "read": "true",
+      "create": "true",
+      "update": "true",
+      "delete": "true"
+    },
+    "auditLogs": {
+      "read": "true",
+      "write": "true"
+    },
+    "sessions": {
+      "read": "true",
+      "write": "true"
+    },
+    "otherDocuments": {
+      "read": "false",
+      "write": "false"
+    }
+  },
+  "collections": {
+    "users": {
+      "collectionName": "users",
+      "description": "Stores student participants and administrative users with scrypt salted password hashes",
+      "type": "object",
+      "required": ["id", "email", "fullName", "gamerTag", "role", "passwordHash"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "unique": true,
+          "description": "Primary Key / Unique identifier (e.g. usr_admin_vijay, usr_st_...)"
+        },
+        "googleId": {
+          "type": "string",
+          "description": "Optional Google OAuth user ID"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "unique": true,
+          "description": "Unique user email address"
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "Salted scrypt password hash string (format: salt:hash)"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the student or admin"
+        },
+        "gamerTag": {
+          "type": "string",
+          "description": "Unique in-game tag / handle"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri",
+          "description": "Avatar picture URL"
+        },
+        "department": {
+          "type": "string",
+          "enum": ["CSE", "AIDS", "AIML", "IT", "CSBS", "Esports Commission"],
+          "description": "Academic department or commission name"
+        },
+        "teamName": {
+          "type": "string",
+          "description": "Registered team name"
+        },
+        "studentId": {
+          "type": "string",
+          "description": "College Roll number or Student ID"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["student", "participant", "admin", "ADMIN"],
+          "description": "User permissions role"
+        },
+        "xp": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Total cumulative Experience Points"
+        },
+        "rankTier": {
+          "type": "string",
+          "default": "Spark",
+          "enum": ["Spark", "Blaze", "Nova", "Legend"],
+          "description": "Competitive tier computed from total XP"
+        },
+        "gamesPlayed": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Count of total matches played"
+        },
+        "wins": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Count of matches won"
+        },
+        "losses": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Count of matches lost"
+        },
+        "joinedAt": {
+          "type": "string",
+          "description": "ISO date string when user joined (YYYY-MM-DD)"
+        }
+      }
+    },
+    "gameResults": {
+      "collectionName": "gameResults",
+      "description": "Logs all match outcomes, scores, and XP awards",
+      "type": "object",
+      "required": ["id", "userId", "game", "result", "xpAwarded", "isVoided"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "unique": true,
+          "description": "Primary Key / Unique match result ID (e.g. res_174000000)"
+        },
+        "userId": {
+          "type": "string",
+          "foreignKey": "users.id",
+          "description": "References User.id"
+        },
+        "userGamerTag": {
+          "type": "string",
+          "description": "Snapshot of user's gamerTag at recording time"
+        },
+        "userFullName": {
+          "type": "string",
+          "description": "Snapshot of user's full name at recording time"
+        },
+        "game": {
+          "type": "string",
+          "enum": [
+            "Chess",
+            "UNO",
+            "Drawasourous / Scribble.io",
+            "Among Us",
+            "Antakshiri",
+            "Dumb Charades",
+            "Guess the PIN"
+          ],
+          "description": "Tournament game name"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["WIN", "LOSS", "CORRECT WITHIN TIME", "WRONG", "TIMEOUT"],
+          "description": "Match result status"
+        },
+        "moviesWon": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Number of movies guessed (Specific to Dumb Charades)"
+        },
+        "xpAwarded": {
+          "type": "number",
+          "description": "XP points added to student profile"
+        },
+        "isVoided": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether result was cancelled/nullified by an admin"
+        },
+        "voidReason": {
+          "type": "string",
+          "description": "Reason for voiding the result"
+        },
+        "recordedByAdmin": {
+          "type": "string",
+          "description": "Email of admin who recorded the match"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of record creation"
+        }
+      }
+    },
+    "xpHistory": {
+      "collectionName": "xpHistory",
+      "description": "Detailed log of all individual XP additions and void deductions",
+      "type": "object",
+      "required": ["id", "userId", "game", "result", "amount", "performedBy", "createdAt"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "unique": true,
+          "description": "Primary Key / XP transaction ID"
+        },
+        "userId": {
+          "type": "string",
+          "foreignKey": "users.id",
+          "description": "References User.id"
+        },
+        "userGamerTag": {
+          "type": "string",
+          "description": "Snapshot of user's gamerTag"
+        },
+        "game": {
+          "type": "string",
+          "description": "Event game title"
+        },
+        "result": {
+          "type": "string",
+          "description": "Formatted result summary string"
+        },
+        "amount": {
+          "type": "number",
+          "description": "XP amount (+ value for gain, - value for deduction)"
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Email of admin executing transaction"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp"
+        }
+      }
+    },
+    "auditLogs": {
+      "collectionName": "auditLogs",
+      "description": "Security and administrative activity trail",
+      "type": "object",
+      "required": ["id", "action", "performedBy", "details", "createdAt"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "unique": true,
+          "description": "Primary Key / Unique audit log entry ID"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "ADMIN_LOGIN",
+            "XP_UPDATE",
+            "RESULT_CORRECTION",
+            "RESULT_VOID",
+            "GAME_STATUS_UPDATE",
+            "PASSWORD_RESET"
+          ],
+          "description": "Category of admin action"
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Email address of performing admin"
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed text description of the action"
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "Client IP address (Default: 127.0.0.1)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp"
+        }
+      }
+    },
+    "sessions": {
+      "collectionName": "sessions",
+      "description": "Active user and admin authorization session tokens",
+      "type": "object",
+      "required": ["token", "userId"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "unique": true,
+          "description": "Session Bearer Token"
+        },
+        "userId": {
+          "type": "string",
+          "foreignKey": "users.id",
+          "description": "References User.id"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Session creation timestamp"
+        }
+      }
+    },
+    "adminResetTokens": {
+      "collectionName": "adminResetTokens (In-Memory / Local Cache)",
+      "description": "Temporary password reset authorization tokens for admin accounts",
+      "type": "object",
+      "properties": {
+        "resetToken": {
+          "type": "string",
+          "description": "Generated secret token string"
+        },
+        "email": {
+          "type": "string",
+          "description": "Admin email requesting reset"
+        },
+        "expiresAt": {
+          "type": "number",
+          "description": "Unix timestamp in milliseconds when token expires (1 hour lifetime)"
+        }
+      }
+    }
+  }
+}
